@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>打印中心 · PrintCenter</title>
+<style>
+:root{
+  --bg:#f3f5f8; --card:#fff; --line:#e3e8f0; --tx:#1c2733; --tx2:#66788c;
+  --brand:#2f6bff; --brand2:#1e4fd6; --ok:#16a34a; --warn:#d97706; --err:#dc2626;
+  --radius:14px; --shadow:0 2px 12px rgba(30,42,70,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
+a{color:var(--brand);text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:14px}
+input,select{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--tx);width:100%;outline:none}
+input:focus,select:focus{border-color:var(--brand)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;background:var(--brand);color:#fff;font-weight:600;transition:.15s}
+.btn:hover{background:var(--brand2)}
+.btn.ghost{background:#eef2f9;color:var(--tx);font-weight:500}
+.btn.ghost:hover{background:#e2e8f3}
+.btn.danger{background:#fdecec;color:var(--err)}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.chip.ok{background:#e5f6ec;color:var(--ok)} .chip.warn{background:#fdf2e2;color:var(--warn)} .chip.err{background:#fde8e8;color:var(--err)}
+.chip.gray{background:#eef1f6;color:var(--tx2)}
+#loginPage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#1d3fae 0%,#2f6bff 55%,#5b8cff 100%);z-index:50}
+.login-card{background:#fff;border-radius:20px;padding:34px 30px;width:340px;max-width:92vw;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.login-card h1{font-size:20px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.login-card p{color:var(--tx2);margin-bottom:20px;font-size:13px}
+.login-card input{margin-bottom:12px}
+.login-card .btn{width:100%;justify-content:center;padding:12px}
+.login-logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2f6bff,#5b8cff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px}
+#appPage{display:none;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:0 18px;height:56px;display:flex;align-items:center;gap:12px}
+.topbar .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#2f6bff,#5b8cff);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px}
+.topbar h1{font-size:16px;font-weight:700;flex:1}
+.topbar .who{color:var(--tx2);font-size:13px}
+.wrap{display:flex;max-width:1280px;margin:0 auto;padding:18px;gap:18px;align-items:flex-start}
+nav{width:176px;flex-shrink:0;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px;position:sticky;top:74px}
+nav button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-radius:10px;color:var(--tx2);font-weight:600;text-align:left;margin-bottom:2px}
+nav button.on{background:#eef3ff;color:var(--brand)}
+nav .nav-foot{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--tx2)}
+main{flex:1;min-width:0}
+.page{display:none}
+.page.on{display:block}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.page-head h2{font-size:18px}
+.status-line{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.stat{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;flex:1;min-width:130px}
+.stat .k{color:var(--tx2);font-size:12px;margin-bottom:4px}
+.stat .v{font-size:20px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.pcard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.pcard .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.pcard .name{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;word-break:break-all}
+.pcard .uri{color:var(--tx2);font-size:12px;word-break:break-all;margin-bottom:8px}
+.pcard .meta{color:var(--tx2);font-size:12.5px;line-height:1.7;margin-bottom:10px}
+.pcard .ops{display:flex;gap:6px;flex-wrap:wrap}
+.empty{padding:48px 20px;text-align:center;color:var(--tx2);background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+th{background:#f7f9fc;text-align:left;padding:11px 14px;font-size:12.5px;color:var(--tx2);border-bottom:1px solid var(--line)}
+td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+td .ops{display:flex;gap:6px;flex-wrap:wrap}
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);box-shadow:var(--shadow)}
+.modal-bg{position:fixed;inset:0;background:rgba(16,26,44,.45);z-index:40;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.on{display:flex}
+.modal{background:#fff;border-radius:18px;width:480px;max-width:94vw;max-height:88vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{font-size:17px;margin-bottom:16px}
+.modal .row{margin-bottom:12px}
+.modal .row label{display:block;font-size:12.5px;color:var(--tx2);margin-bottom:5px;font-weight:600}
+.modal .row .hint{font-size:12px;color:var(--tx2);margin-top:4px}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.modal .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal .form-grid .full{grid-column:1/-1}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1c2733;color:#fff;padding:11px 20px;border-radius:12px;font-size:13.5px;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.toast.on{display:block}
+.toast.err{background:var(--err)}
+.toast.ok{background:var(--ok)}
+.sec{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+.sec h3{font-size:15px;margin-bottom:12px}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:8px 16px;font-size:13.5px}
+.kv dt{color:var(--tx2)}
+.kv dd{word-break:break-all}
+@media(max-width:760px){
+  .wrap{flex-direction:column;padding:12px}
+  nav{width:100%;position:static;display:flex;gap:4px;overflow-x:auto;padding:8px}
+  nav button{flex:1;min-width:90px;justify-content:center;padding:10px 6px;margin:0}
+  nav .nav-foot{display:none}
+  .grid{grid-template-columns:1fr}
+  .modal .form-grid{grid-template-columns:1fr}
+  .stat{min-width:100px}
+}
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="login-card">
+    <h1><span class="login-logo">印</span>打印中心</h1>
+    <p>CUPS 打印管理 · 登录后使用</p>
+    <input id="lgUser" placeholder="用户名" autocomplete="username">
+    <input id="lgPass" type="password" placeholder="密码" autocomplete="current-password">
+    <button class="btn" id="lgBtn" onclick="doLogin()">登 录</button>
+  </div>
+</div>
+
+<div id="appPage">
+  <div class="topbar">
+    <span class="logo">印</span><h1>打印中心</h1>
+    <span class="who" id="whoAmI"></span>
+    <button class="btn ghost sm" onclick="logout()">退出</button>
+  </div>
+  <div class="wrap">
+    <nav>
+      <button id="nav-printers" class="on" onclick="go('printers')">🖨️ 打印机</button>
+      <button id="nav-jobs" onclick="go('jobs')">📋 打印作业</button>
+      <button id="nav-settings" onclick="go('settings')">⚙️ 设置</button>
+      <button id="nav-users" onclick="go('users')">👥 用户管理</button>
+      <button id="nav-about" onclick="go('about')">ℹ️ 关于</button>
+      <div class="nav-foot">v0.0.5</div>
+    </nav>
+    <main>
+
+      <div class="page on" id="page-printers">
+        <div class="status-line">
+          <div class="stat"><div class="k">服务状态</div><div class="v" id="stSvc">-</div></div>
+          <div class="stat"><div class="k">CUPS 版本</div><div class="v" id="stVer">-</div></div>
+          <div class="stat"><div class="k">打印机</div><div class="v" id="stPrn">-</div></div>
+          <div class="stat"><div class="k">活动作业</div><div class="v" id="stJob">-</div></div>
+        </div>
+        <div class="page-head">
+          <h2>打印机列表</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn ghost" onclick="refreshPrinters()">刷新</button>
+            <button class="btn" onclick="openAdd()">＋ 添加打印机</button>
+          </div>
+        </div>
+        <div class="grid" id="printerGrid"></div>
+      </div>
+
+      <div class="page" id="page-jobs">
+        <div class="page-head">
+          <h2>打印作业</h2>
+          <div style="display:flex;gap:8px">
+            <select id="jobFilter" onchange="refreshJobs()">
+              <option value="active">进行中 / 等待</option>
+              <option value="all">全部（含已完成）</option>
+              <option value="completed">已完成</option>
+            </select>
+            <button class="btn danger" onclick="cancelAll()">清空队列</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>作业号</th><th>标题</th><th>打印机</th><th>用户</th><th>大小</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+            <tbody id="jobBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page" id="page-settings">
+        <div class="page-head"><h2>设置</h2></div>
+        <div class="sec">
+          <h3>服务参数</h3>
+          <div class="kv">
+            <dt>CUPS 端口</dt><dd id="setPort">-</dd>
+            <dt>数据目录</dt><dd id="setData">-</dd>
+            <dt>CUPS 程序目录</dt><dd id="setPrefix">-</dd>
+          </div>
+          <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><label style="font-size:12.5px;color:var(--tx2)">日志级别</label>
+              <select id="setLog" style="margin-top:5px">
+                <option value="debug">debug</option><option value="info">info</option>
+                <option value="warn">warn</option><option value="error">error</option>
+              </select></div>
+            <div><label style="font-size:12.5px;color:var(--tx2)">浏览/发现（Bonjour）</label>
+              <select id="setBrowse" style="margin-top:5px">
+                <option value="Off">关闭</option><option value="On">开启</option>
+              </select></div>
+          </div>
+          <div style="margin-top:14px"><button class="btn" onclick="saveSettings()">保存并重启打印服务</button></div>
+        </div>
+        <div class="sec">
+          <h3>更改密码</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <input type="password" id="pwOld" placeholder="原密码">
+            <input type="password" id="pwNew" placeholder="新密码">
+            <button class="btn ghost" onclick="changePw()">修改</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-users">
+        <div class="page-head">
+          <h2>用户管理</h2>
+          <button class="btn" onclick="openUserAdd()">＋ 添加用户</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>操作</th></tr></thead>
+            <tbody id="userBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page" id="page-about">
+        <div class="sec">
+          <h3>打印中心 PrintCenter</h3>
+          <div class="kv">
+            <dt>版本</dt><dd>v0.0.5</dd>
+            <dt>说明</dt><dd>基于 CUPS 的 NAS 打印服务器应用，提供打印机管理、作业队列、测试页、网络打印与手机端适配的中文管理界面。</dd>
+            <dt>支持</dt><dd>USB（需设备权限）· 网络 IPP · 网络 IP/LPD 打印机 · 共享给局域网</dd>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <h3 id="addTitle">添加打印机</h3>
+    <div class="form-grid">
+      <div class="row full"><label>打印机名称 *</label><input id="fName" placeholder="如：客厅HP打印机"></div>
+      <div class="row full"><label>连接类型 *</label>
+        <select id="fType" onchange="typeChanged()">
+          <option value="ipp">网络 IPP 打印机（同网段共享打印机）</option>
+          <option value="socket">网络 IP 打印机（直连 9100 端口）</option>
+          <option value="lpd">网络 LPD 打印机（515 端口）</option>
+          <option value="usb">USB 直连打印机</option>
+        </select></div>
+      <div class="row full" id="hostRow"><label>打印机地址（IP 或主机名）*</label><input id="fHost" placeholder="192.168.1.100"></div>
+      <div class="row" id="portRow"><label>端口</label><input id="fPort" value="9100"></div>
+      <div class="row" id="queueRow"><label>队列/名称</label><input id="fQueue" placeholder="queue（IPP/LPD 可选）"></div>
+      <div class="row full"><label>驱动（PPD）</label>
+        <input id="fDriverSearch" placeholder="输入品牌/型号过滤，如 HP / Canon LBP" style="margin-bottom:6px">
+        <select id="fDriver" size="6" style="height:auto"></select>
+      </div>
+      <div class="row"><label>位置</label><input id="fLoc" placeholder="如：办公室"></div>
+      <div class="row"><label>备注</label><input id="fInfo" placeholder="备注信息"></div>
+      <div class="row full" style="display:flex;gap:16px">
+        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="fShared" checked> 共享给局域网</label>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal('addModal')">取消</button>
+      <button class="btn" onclick="savePrinter()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="printModal">
+  <div class="modal">
+    <h3>打印文件</h3>
+    <div class="row"><label>打印机</label><input id="pPrinter" readonly></div>
+    <div class="row"><label>选择文件（txt/pdf/图片/office）</label><input type="file" id="pFile"></div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal('printModal')">取消</button>
+      <button class="btn" onclick="uploadPrint()">开始打印</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="userModal">
+  <div class="modal">
+    <h3>添加用户</h3>
+    <div class="row"><label>用户名 *</label><input id="uName"></div>
+    <div class="row"><label>姓名</label><input id="uNick"></div>
+    <div class="row"><label>密码 *（至少4位）</label><input id="uPass" type="password"></div>
+    <div class="row"><label>角色</label>
+      <select id="uRole"><option value="operator">操作员</option><option value="admin">管理员</option></select>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal('userModal')">取消</button>
+      <button class="btn" onclick="saveUser()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let TOKEN = localStorage.getItem('pc_token') || '';
+let me = null;
+const $ = id => document.getElementById(id);
+
+function api(method, url, body, raw) {
+  const opt = { method, headers: { Authorization: 'Bearer ' + TOKEN } };
+  if (body !== undefined) {
+    if (raw) { opt.body = body; }
+    else { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  }
+  return fetch(url, opt).then(async r => {
+    const j = await r.json().catch(() => ({ ok: false, msg: '后端服务响应异常：HTTP ' + r.status + '（请检查应用日志：文件管理 → 应用文件 → printcups/data/logs/app.log）' }));
+    if (r.status === 401 && url !== 'api/login') { logout(true); }
+    return j;
+  });
+}
+
+function toast(msg, type) {
+  const t = $('toast');
+  t.textContent = msg; t.className = 'toast on ' + (type || '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 2400);
+}
+
+function go(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('on'));
+  $('page-' + page).classList.add('on');
+  $('nav-' + page).classList.add('on');
+  if (page === 'printers') { loadStatus(); refreshPrinters(); }
+  if (page === 'jobs') refreshJobs();
+  if (page === 'settings') loadSettings();
+  if (page === 'users') refreshUsers();
+}
+
+function doLogin() {
+  const u = $('lgUser').value.trim(), p = $('lgPass').value;
+  if (!u || !p) return toast('请输入用户名和密码', 'err');
+  api('POST', 'api/login', { username: u, password: p }).then(r => {
+    if (!r.ok) return toast(r.msg || '登录失败', 'err');
+    TOKEN = r.token; localStorage.setItem('pc_token', TOKEN);
+    me = { username: r.username, role: r.role, name: r.name };
+    enterApp();
+  });
+}
+function logout(expired) {
+  if (!expired) api('POST', 'api/logout').catch(() => {});
+  TOKEN = ''; localStorage.removeItem('pc_token');
+  $('appPage').style.display = 'none'; $('loginPage').style.display = 'flex';
+}
+function enterApp() {
+  $('loginPage').style.display = 'none'; $('appPage').style.display = 'block';
+  $('whoAmI').textContent = (me.name || me.username) + (me.role === 'super' ? ' · 超管' : '');
+  $('nav-users').style.display = me.role === 'super' ? '' : 'none';
+  go('printers');
+}
+function boot() {
+  if (!TOKEN) return;
+  api('GET', 'api/me').then(r => {
+    if (!r.ok) return logout(true);
+    me = { username: r.username, role: r.role, name: r.name };
+    enterApp();
+  });
+}
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && $('loginPage').style.display !== 'none') doLogin(); });
+
+function loadStatus() {
+  api('GET', 'api/status').then(r => {
+    if (!r.ok) return;
+    $('stSvc').innerHTML = r.running ? '<span class="chip ok">运行中</span>' : '<span class="chip err">已停止</span>';
+    $('stVer').textContent = r.version || '-';
+    $('stPrn').textContent = '-'; $('stJob').textContent = '-';
+    $('setPrefix').textContent = r.prefix || '-';
+  });
+}
+
+function refreshPrinters() {
+  Promise.all([api('GET', 'api/printers'), api('GET', 'api/jobs?filter=active')]).then(([pr, jr]) => {
+    if (!pr.ok) return;
+    const list = pr.printers || [];
+    $('stPrn').textContent = list.length;
+    $('stJob').textContent = (jr.jobs || []).length;
+    const grid = $('printerGrid');
+    if (!list.length) { grid.innerHTML = '<div class="empty">还没有打印机，点击右上角「添加打印机」开始配置</div>'; return; }
+    grid.innerHTML = list.map(p => {
+      const st = p.stateText || '';
+      const stateChip = /disabled/i.test(st) ? '<span class="chip err">停用</span>'
+        : /Stopped|停止|error/i.test(st) ? '<span class="chip warn">异常</span>'
+        : '<span class="chip ok">就绪</span>';
+      return `<div class="pcard">
+        <div class="top"><span class="name">${esc(p.name)} ${p.isDefault ? '<span class="chip gray">默认</span>' : ''}</span>${stateChip}</div>
+        <div class="uri">${esc(p.deviceUri || '-')}</div>
+        <div class="meta">${esc(p.info || '')}${p.location ? ' · ' + esc(p.location) : ''}<br>驱动：${esc(p.driver || '默认')}${p.shared ? ' · 已共享' : ''}</div>
+        <div class="ops">
+          <button class="btn sm ghost" onclick="testPage('${p.name}')">测试页</button>
+          <button class="btn sm ghost" onclick="openPrint('${p.name}')">打印文件</button>
+          ${p.isDefault ? '' : `<button class="btn sm ghost" onclick="setDefault('${p.name}')">设默认</button>`}
+          <button class="btn sm ghost" onclick="editPrinter('${p.name}')">编辑</button>
+          <button class="btn sm danger" onclick="delPrinter('${p.name}')">删除</button>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+let ALL_DRIVERS = [];
+function loadDrivers(sel) {
+  api('GET', 'api/drivers').then(r => {
+    ALL_DRIVERS = (r.drivers || []).map(d => ({ file: d.file, model: d.model || d.file, key: (d.model || d.file).toLowerCase() + ' ' + d.file.toLowerCase() }));
+    renderDrivers(sel, '');
+    const q = $('fDriverSearch');
+    if (q) {
+      q.value = '';
+      q.oninput = () => renderDrivers(sel, q.value.trim().toLowerCase());
+    }
+  });
+}
+function renderDrivers(sel, kw) {
+  const s = $(sel);
+  const list = kw ? ALL_DRIVERS.filter(d => d.key.includes(kw)) : ALL_DRIVERS;
+  s.innerHTML = list.map(d => `<option value="${esc(d.file)}">${esc(d.model)}</option>`).join('');
+  if (!kw) {
+    const g = ALL_DRIVERS.find(d => d.file === 'Generic-PDF_Printer-PDF');
+    if (g) s.value = g.file;
+  }
+}
+
+function typeChanged() {
+  const t = $('fType').value;
+  $('hostRow').style.display = t === 'usb' ? 'none' : '';
+  $('portRow').style.display = (t === 'socket' || t === 'ipp' || t === 'lpd') ? '' : 'none';
+  $('queueRow').style.display = (t === 'ipp' || t === 'lpd') ? '' : 'none';
+  if (t === 'usb') $('fPort').value = '';
+  if (t === 'socket' && !$('fPort').value) $('fPort').value = '9100';
+  if (t === 'ipp' && !$('fPort').value) $('fPort').value = '631';
+  if (t === 'lpd' && !$('fPort').value) $('fPort').value = '515';
+}
+
+function openAdd() {
+  $('addTitle').textContent = '添加打印机';
+  ['fName','fHost','fQueue','fLoc','fInfo'].forEach(i => $(i).value = '');
+  $('fPort').value = '9100'; $('fShared').checked = true;
+  $('fType').value = 'socket'; typeChanged();
+  loadDrivers('fDriver');
+  $('addModal').classList.add('on');
+}
+function editPrinter(name) {
+  api('GET', 'api/printers').then(r => {
+    const p = (r.printers || []).find(x => x.name === name);
+    if (!p) return toast('打印机不存在', 'err');
+    $('addTitle').textContent = '编辑打印机 ' + name;
+    $('fName').value = p.name;
+    const uri = p.deviceUri || '';
+    if (uri.startsWith('usb:')) { $('fType').value = 'usb'; $('fHost').value = uri; $('fPort').value = ''; }
+    else {
+      const m = uri.match(/^(\w+):\/\/([^:\/]+)(?::(\d+))?/);
+      if (m) { $('fType').value = m[1]; $('fHost').value = m[2]; $('fPort').value = m[3] || (m[1]==='ipp'?'631':m[1]==='lpd'?'515':'9100'); }
+      else { $('fType').value = 'socket'; $('fHost').value = uri; $('fPort').value = '9100'; }
+    }
+    $('fQueue').value = '';
+    $('fLoc').value = p.location || ''; $('fInfo').value = p.info || '';
+    $('fShared').checked = !!p.shared;
+    loadDrivers('fDriver');
+    setTimeout(() => { $('fDriver').value = p.driver || 'Generic-PDF_Printer-PDF'; }, 200);
+    $('addModal').classList.add('on');
+  });
+}
+function savePrinter() {
+  const name = $('fName').value.trim();
+  const type = $('fType').value;
+  if (!name) return toast('请填写打印机名称', 'err');
+  let uri;
+  if (type === 'usb') { uri = $('fHost').value.trim() || 'usb://unknown'; }
+  else {
+    const host = $('fHost').value.trim();
+    if (!host) return toast('请填写打印机地址', 'err');
+    const port = $('fPort').value.trim();
+    const queue = $('fQueue').value.trim();
+    uri = type === 'socket' ? `socket://${host}:${port || '9100'}`
+      : type === 'ipp' ? `ipp://${host}${port ? ':' + port : ''}/printers/${queue || 'print'}`
+      : `lpd://${host}/${queue || ''}`;
+  }
+  const body = { name, uri, driver: $('fDriver').value, info: $('fInfo').value.trim(), location: $('fLoc').value.trim(), shared: $('fShared').checked };
+  const editing = $('addTitle').textContent.startsWith('编辑');
+  const req = editing ? api('PUT', 'api/printers/' + encodeURIComponent(name), body) : api('POST', 'api/printers', body);
+  req.then(r => {
+    if (!r.ok) return toast(r.msg || '保存失败', 'err');
+    toast('已保存', 'ok'); closeModal('addModal'); refreshPrinters();
+  });
+}
+function delPrinter(name) {
+  if (!confirm('确定删除打印机「' + name + '」？')) return;
+  api('DELETE', 'api/printers/' + encodeURIComponent(name)).then(r => {
+    toast(r.ok ? '已删除' : (r.msg || '删除失败'), r.ok ? 'ok' : 'err');
+    refreshPrinters();
+  });
+}
+function setDefault(name) {
+  api('POST', `/api/printers/${encodeURIComponent(name)}/default`).then(r => { toast(r.ok ? '已设为默认' : (r.msg||'失败'), r.ok?'ok':'err'); refreshPrinters(); });
+}
+function testPage(name) {
+  api('POST', `/api/printers/${encodeURIComponent(name)}/test`).then(r => {
+    toast(r.ok ? '测试页已提交打印' : (r.msg || '提交失败'), r.ok ? 'ok' : 'err');
+  });
+}
+function openPrint(name) {
+  $('pPrinter').value = name; $('pFile').value = '';
+  $('printModal').classList.add('on');
+}
+function uploadPrint() {
+  const f = $('pFile').files[0];
+  if (!f) return toast('请选择文件', 'err');
+  const fd = new FormData();
+  fd.append('file', f); fd.append('printer', $('pPrinter').value); fd.append('title', f.name);
+  fetch('api/print', { method: 'POST', headers: { Authorization: 'Bearer ' + TOKEN }, body: fd })
+    .then(r => r.json().catch(() => ({ ok:false, msg:'后端服务响应异常：HTTP ' + r.status }))).then(r => {
+      toast(r.ok ? '打印任务已提交' : (r.msg || '提交失败'), r.ok ? 'ok' : 'err');
+      if (r.ok) { closeModal('printModal'); refreshPrinters(); }
+    });
+}
+
+function refreshJobs() {
+  const filter = $('jobFilter').value;
+  api('GET', 'api/jobs?filter=' + filter).then(r => {
+    if (!r.ok) return;
+    const jobs = r.jobs || [];
+    $('jobBody').innerHTML = jobs.length ? jobs.map(j => {
+      const st = j.status || '';
+      const chip = /completed|已完成/.test(st) ? '<span class="chip ok">已完成</span>'
+        : /canceled|取消/.test(st) ? '<span class="chip gray">已取消</span>'
+        : /held|暂停/.test(st) ? '<span class="chip warn">暂停</span>'
+        : /error|失败/.test(st) ? '<span class="chip err">失败</span>'
+        : '<span class="chip warn">' + esc(st) + '</span>';
+      const active = filter === 'active' || filter === 'all';
+      return `<tr><td>${esc(j.id)}</td><td>${esc(j.title || '-')}</td><td>${esc(j.printer)}</td><td>${esc(j.user)}</td><td>${esc(j.size)}</td><td>${chip}</td><td>${esc(j.time)}</td>
+      <td class="ops">${active ? `<button class="btn sm ghost" onclick="jobAction('${j.id}','restart')">重启</button>
+      <button class="btn sm ghost" onclick="jobAction('${j.id}','hold')">暂停</button>
+      <button class="btn sm ghost" onclick="jobAction('${j.id}','release')">继续</button>
+      <button class="btn sm danger" onclick="jobAction('${j.id}','cancel')">取消</button>` : ''}</td></tr>`;
+    }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:30px">暂无作业</td></tr>';
+  });
+}
+function jobAction(id, act) {
+  api('POST', `/api/jobs/${id}/${act}`).then(r => toast(r.ok ? '操作成功' : (r.msg || '操作失败'), r.ok ? 'ok' : 'err'));
+  setTimeout(refreshJobs, 800);
+}
+function cancelAll() {
+  if (!confirm('清空所有活动打印作业？')) return;
+  api('POST', 'api/jobs/cancel-all').then(r => toast('已清空 ' + (r.cancelled || 0) + ' 个作业', 'ok'));
+  setTimeout(refreshJobs, 800);
+}
+
+function loadSettings() {
+  api('GET', 'api/settings').then(r => {
+    if (!r.ok) return;
+    $('setPort').textContent = r.settings.port;
+    $('setData').textContent = r.settings.dataDir;
+    $('setPrefix').textContent = r.settings.cupsPrefix;
+    $('setLog').value = r.settings.logLevel || 'info';
+    $('setBrowse').value = r.settings.browsing || 'Off';
+  });
+}
+function saveSettings() {
+  api('PUT', 'api/settings', { logLevel: $('setLog').value, browsing: $('setBrowse').value === 'On' })
+    .then(r => toast(r.ok ? '已保存并重启服务' : (r.msg || '保存失败'), r.ok ? 'ok' : 'err'));
+}
+function changePw() {
+  const old = $('pwOld').value, now = $('pwNew').value;
+  if (!old || !now) return toast('请填写原密码和新密码', 'err');
+  api('POST', 'api/password', { old, now }).then(r => {
+    toast(r.ok ? '密码已修改' : (r.msg || '修改失败'), r.ok ? 'ok' : 'err');
+    if (r.ok) { $('pwOld').value = ''; $('pwNew').value = ''; }
+  });
+}
+
+function refreshUsers() {
+  api('GET', 'api/users').then(r => {
+    if (!r.ok) return;
+    $('userBody').innerHTML = (r.users || []).map(u => `<tr>
+      <td>${esc(u.username)}</td><td>${esc(u.name || '')}</td>
+      <td>${u.role === 'super' ? '超级管理员' : u.role === 'admin' ? '管理员' : '操作员'}</td>
+      <td class="ops">${u.username === 'admin' ? '' : `<button class="btn sm danger" onclick="delUser('${u.username}')">删除</button>`}</td>
+    </tr>`).join('');
+  });
+}
+function openUserAdd() {
+  ['uName','uNick','uPass'].forEach(i => $(i).value = '');
+  $('uRole').value = 'operator';
+  $('userModal').classList.add('on');
+}
+function saveUser() {
+  const username = $('uName').value.trim();
+  if (!username) return toast('请填写用户名', 'err');
+  api('POST', 'api/users', { username, name: $('uNick').value.trim(), password: $('uPass').value, role: $('uRole').value })
+    .then(r => { toast(r.ok ? '已添加' : (r.msg || '添加失败'), r.ok ? 'ok' : 'err'); if (r.ok) { closeModal('userModal'); refreshUsers(); } });
+}
+function delUser(u) {
+  if (!confirm('删除用户 ' + u + '？')) return;
+  api('DELETE', 'api/users/' + encodeURIComponent(u)).then(r => toast(r.ok ? '已删除' : (r.msg || '失败'), r.ok ? 'ok' : 'err'));
+}
+
+function closeModal(id) { $(id).classList.remove('on'); }
+document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('on'); }));
+
+boot();
+</script>
+</body>
+</html>
