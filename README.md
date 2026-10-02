@@ -11,7 +11,11 @@ fnOS（飞牛 OS）网络打印管理应用，基于 CUPS 2.4.2 源码编译运�
 - 安装向导可自定义数据存储路径与服务端口
 
 ## 安装
-在 fnOS 应用中心 → 手动安装，选择 Release 中的 `printcups-*.fpk`。
+在 fnOS 应用中心 → 手动安装，选择 `printcups-v0.0.5.fpk`（v0.0.5 已发布）。
+
+**下载地址**：
+- GitHub Release（安装包 + 源码）：https://github.com/cp4857971/printcups/releases
+- 安装包直链：https://github.com/cp4857971/printcups/raw/main/printcups-v0.0.5.fpk
 
 ## 构建
 需要 fnpack（fnOS 应用打包工具）：
