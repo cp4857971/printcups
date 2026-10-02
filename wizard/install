@@ -1,0 +1,41 @@
+[
+  {
+    "stepTitle": "数据存储与端口设置",
+    "items": [
+      {
+        "type": "tips",
+        "field": "data_tip",
+        "label": "数据存放说明",
+        "helpText": "打印队列与 CUPS 数据默认保存在 文件管理 → 应用文件 → printcups/data（应用文件区）。如需自定义存放路径，请在下方填写绝对路径（如 /vol1/存储空间1/printcups-data）；留空则使用默认目录。",
+        "initValue": ""
+      },
+      {
+        "type": "text",
+        "field": "data_path",
+        "label": "自定义数据路径（可留空）",
+        "helpText": "填写绝对路径；该路径需对本应用用户可写，否则启动后设置页会给出提示。",
+        "initValue": "",
+        "rules": [
+          { "max": 500, "message": "路径过长（不超过500字符）" }
+        ]
+      },
+      {
+        "type": "tips",
+        "field": "port_tip",
+        "label": "服务端口说明",
+        "helpText": "应用经飞牛网关访问（/app/printcups）无需端口。此处端口仅用于局域网直连或隧道映射（如 frpc / 节点小宝 等把外网访问转发到 NAS 的该端口）；留空使用默认 3001。",
+        "initValue": ""
+      },
+      {
+        "type": "text",
+        "field": "app_port",
+        "label": "服务端口（可留空，默认 3001）",
+        "helpText": "填写 1-65535 的数字；留空则使用默认 3001。",
+        "initValue": "",
+        "rules": [
+          { "max": 5, "message": "端口最多 5 位数字" }
+        ]
+      }
+    ]
+  }
+]

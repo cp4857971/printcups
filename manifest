@@ -1,0 +1,13 @@
+appname               = printcups
+version               = 0.0.5
+desc                  = 打印中心 PrintCenter：基于 CUPS 的网络打印管理，中文窗口化界面，支持打印机添加/驱动选择/测试页/文件打印/作业管理/用户权限/全部功能窗口化
+display_name          = 打印中心
+maintainer            = cp
+distributor           = cp
+platform              = all
+desktop_uidir         = ui
+desktop_applaunchname = printcups.main
+source                = thirdparty
+install_dep_apps      = nodejs_v22
+os_min_version        = 1.1.3100
+ctl_stop              = true

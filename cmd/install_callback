@@ -1,0 +1,33 @@
+#!/bin/bash
+### This script is called after the user installs the application.
+### 若安装向导中填写了自定义数据路径 / 服务端口，则写入应用文件区 config.json
+### （dataDir / httpPort 字段），服务启动时读取该配置生效。
+
+export PATH=/var/apps/nodejs_v22/target/bin:$PATH
+
+DATA_SHARE="${TRIM_DATA_SHARE_PATHS%%:*}"
+WIZARD_PATH="${wizard_data_path:-}"
+WIZARD_PORT="${wizard_app_port:-}"
+
+if [ -n "$WIZARD_PATH" ] || [ -n "$WIZARD_PORT" ]; then
+  if [ -d "$DATA_SHARE" ]; then
+    CFG="$DATA_SHARE/config.json"
+    node -e '
+      const fs = require("fs");
+      const path = require("path");
+      const [cfg, dataVal, portVal] = process.argv.slice(1);
+      let c = {};
+      try { c = JSON.parse(fs.readFileSync(cfg, "utf8")); } catch (e) {}
+      if (typeof c !== "object" || c === null || Array.isArray(c)) c = {};
+      if (dataVal) c.dataDir = dataVal;
+      if (portVal) {
+        const p = Number(portVal);
+        if (Number.isInteger(p) && p >= 1 && p <= 65535) c.httpPort = p;
+      }
+      fs.mkdirSync(path.dirname(cfg), { recursive: true });
+      fs.writeFileSync(cfg, JSON.stringify(c, null, 2));
+    ' "$CFG" "$WIZARD_PATH" "$WIZARD_PORT" || true
+  fi
+fi
+
+exit 0

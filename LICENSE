@@ -1,0 +1,5 @@
+打印中心 PrintCenter（printcups）
+版权所有 (c) 2026 cp
+本应用捆绑 CUPS 2.4.2（Apache License 2.0，OpenPrinting 项目）与 Node.js 运行时。
+CUPS 许可协议见应用内 /cups/share/doc/cups/LICENSE。
+本应用按“原样”提供，不附带任何明示或默示担保。

@@ -1,0 +1,113 @@
+#!/bin/bash
+export PATH=/var/apps/nodejs_v22/target/bin:/usr/bin:/bin
+APP_DIR="${TRIM_APPDEST}/server"
+CUPS_PREFIX="${TRIM_APPDEST}/cups"
+DATA_DIR="${TRIM_DATA_SHARE_PATHS%%:*}"
+GATEWAY_PREFIX="/app/printcups"
+SOCKET_PATH="${TRIM_APPDEST}/app.sock"
+PID_FILE="${TRIM_PKGVAR}/app.pid"
+LOG_FILE="${DATA_DIR}/logs/app.log"
+mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || LOG_FILE="${TRIM_PKGVAR}/app.log"
+
+log_msg() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+}
+
+check_process() {
+  local pid="$1"
+  kill -0 "$pid" 2>/dev/null
+}
+
+status_app() {
+  if [ -f "$PID_FILE" ]; then
+    local pid
+    pid="$(head -n 1 "$PID_FILE" | tr -d '[:space:]')"
+    if [ -n "$pid" ] && check_process "$pid"; then
+      return 0
+    fi
+    rm -f "$PID_FILE"
+  fi
+  return 1
+}
+
+start_app() {
+  if status_app; then
+    return 0
+  fi
+  log_msg "Starting 打印中心 PrintCenter..."
+  if [ ! -x "${CUPS_PREFIX}/sbin/cupsd" ]; then
+    echo "cupsd not found at ${CUPS_PREFIX}/sbin/cupsd" >> "${TRIM_TEMP_LOGFILE:-/dev/null}"
+    exit 1
+  fi
+  if ! command -v node >/dev/null 2>&1; then
+    echo "node not found in PATH ($PATH)" >> "${TRIM_TEMP_LOGFILE:-/dev/null}"
+    exit 1
+  fi
+  cd "$APP_DIR" || exit 1
+  CFG="$(node -e 'try{const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(JSON.stringify({d:c.dataDir||"",p:c.httpPort||""}))}catch(e){process.stdout.write("{}")}' "$DATA_DIR/config.json" 2>/dev/null)"
+  CFG_DIR="$(echo "$CFG" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);process.stdout.write(j.d||"")}catch(e){}})')"
+  CFG_PORT="$(echo "$CFG" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);process.stdout.write(j.p||"")}catch(e){}})')"
+  if [ -n "$CFG_DIR" ]; then
+    DATA_DIR="$CFG_DIR"
+  fi
+  if [ -n "$CFG_PORT" ]; then
+    PC_HTTP_PORT="$CFG_PORT"
+  else
+    PC_HTTP_PORT="3001"
+  fi
+  DATA_DIR="$DATA_DIR" CUPS_PREFIX="$CUPS_PREFIX" GATEWAY_PREFIX="$GATEWAY_PREFIX" SOCKET_PATH="$SOCKET_PATH" PC_HTTP_PORT="$PC_HTTP_PORT" \
+    node server.js >> "$LOG_FILE" 2>&1 &
+  echo "$!" > "$PID_FILE"
+}
+
+stop_app() {
+  log_msg "Stopping 打印中心..."
+  if [ ! -f "$PID_FILE" ]; then
+    return 0
+  fi
+  local pid
+  pid="$(head -n 1 "$PID_FILE" | tr -d '[:space:]')"
+  if [ -z "$pid" ] || ! check_process "$pid"; then
+    rm -f "$PID_FILE"
+    return 0
+  fi
+  kill -TERM "$pid" 2>> "$LOG_FILE" || true
+  local count=0
+  while check_process "$pid" && [ "$count" -lt 10 ]; do
+    sleep 1
+    count=$((count + 1))
+  done
+  if check_process "$pid"; then
+    kill -KILL "$pid" 2>> "$LOG_FILE" || true
+  fi
+  rm -f "$PID_FILE"
+  rm -f "$SOCKET_PATH"
+  if command -v pgrep >/dev/null 2>&1; then
+    for cp in $(pgrep -x cupsd 2>/dev/null); do
+      kill -TERM "$cp" 2>/dev/null || true
+    done
+    sleep 1
+    for cp in $(pgrep -x cupsd 2>/dev/null); do
+      kill -KILL "$cp" 2>/dev/null || true
+    done
+  fi
+}
+
+case "$1" in
+  start)
+    start_app
+    ;;
+  stop)
+    stop_app
+    ;;
+  status)
+    if status_app; then
+      exit 0
+    fi
+    exit 3
+    ;;
+  *)
+    echo "Unknown command: $1" > "${TRIM_TEMP_LOGFILE:-/dev/null}"
+    exit 1
+    ;;
+esac
