@@ -1,0 +1,13 @@
+{
+  "name": "printcenter-backend",
+  "version": "0.0.5",
+  "description": "打印中心 CUPS 管理后端（fnOS 应用版）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
